@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent NoSQL & Wine Classification | CSE 494</title>
+    <!-- Modern Sans Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Chart.js CDN for clean dark data visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Top Header & Academic Attribution Bar -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="header-brand">
+                <div class="brand-logo">
+                    <span class="logo-icon">🍇</span>
+                    <div>
+                        <h1 class="brand-title">Wine Cultivar Intelligence & NoSQL DB</h1>
+                        <p class="brand-subtitle">Coursework CA2 | CSE 494: Intelligent NoSQL Database</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-student">
+                <div class="student-badge">
+                    <span class="student-name">Gunda Venkatasai</span>
+                    <span class="student-meta">Reg: <strong>12314012</strong> • Sec: <strong>K223QR</strong></span>
+                    <span class="faculty-meta">Faculty: <strong>RICHA [32366]</strong> • Lovely Professional University</span>
+                </div>
+            </div>
+
+            <div class="header-status">
+                <div class="status-card" id="dbStatusBadge">
+                    <span class="status-indicator online"></span>
+                    <div class="status-text">
+                        <span class="status-title" id="dbModeText">Loading DB...</span>
+                        <span class="status-sub" id="dbSubText">WineAnalysisDB.wine_samples</span>
+                    </div>
+                    <button class="btn-config" id="btnOpenDbModal" title="Configure MongoDB Connection">⚙️</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="app-nav">
+        <div class="nav-container">
+            <button class="nav-tab active" data-tab="overview">
+                <span class="tab-icon">📊</span> Overview & EDA
+            </button>
+            <button class="nav-tab" data-tab="nosql">
+                <span class="tab-icon">🍃</span> MongoDB Console
+            </button>
+            <button class="nav-tab" data-tab="classifier">
+                <span class="tab-icon">🤖</span> Live Classifier
+            </button>
+            <button class="nav-tab" data-tab="models">
+                <span class="tab-icon">📈</span> Model Performance
+            </button>
+            <button class="nav-tab" data-tab="dataset">
+                <span class="tab-icon">📋</span> Wine Dataset (178)
+            </button>
+            <button class="nav-tab" data-tab="outputs">
+                <span class="tab-icon">💾</span> Project Outputs
+            </button>
+            <button class="nav-tab" data-tab="report">
+                <span class="tab-icon">📑</span> Report Summary
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+        <!-- 1. TAB: OVERVIEW & EDA -->
+        <section id="tab-overview" class="tab-content active">
+            <!-- Key Metric Counters -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <span class="kpi-label">Total Wine Samples</span>
+                    <span class="kpi-value emerald" id="kpiTotalSamples">178</span>
+                    <span class="kpi-desc">UCI Machine Learning Repository</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Chemical Attributes</span>
+                    <span class="kpi-value cyan">13</span>
+                    <span class="kpi-desc">Continuous & Integer Lab Measurements</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Target Classes</span>
+                    <span class="kpi-value amber">3 Cultivars</span>
+                    <span class="kpi-desc">Cultivar_1, Cultivar_2, Cultivar_3</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Top Holdout Accuracy</span>
+                    <span class="kpi-value emerald">100.00%</span>
+                    <span class="kpi-desc">Random Forest & Logistic Regression</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">5-Fold CV Accuracy</span>
+                    <span class="kpi-value gold">97.73%</span>
+                    <span class="kpi-desc">StratifiedKFold (±0.0372 std)</span>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid-2-col">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Distribution of Wine Cultivars</h3>
+                        <span class="panel-tag">Report Section 5.1 & Figure 1</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-container">
+                            <canvas id="classDistChart"></canvas>
+                        </div>
+                        <div class="class-summary-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Class Label</th>
+                                        <th>Records</th>
+                                        <th>Share</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge badge-c1">Cultivar_1</span></td>
+                                        <td>59</td>
+                                        <td>33.15%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge badge-c2">Cultivar_2</span></td>
+                                        <td>71</td>
+                                        <td>39.89%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge badge-c3">Cultivar_3</span></td>
+                                        <td>48</td>
+                                        <td>26.97%</td>
+                                    </tr>
+                                    <tr class="table-total">
+                                        <td><strong>Total</strong></td>
+                                        <td><strong>178</strong></td>
+                                        <td><strong>100.00%</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Key Chemical Correlations & Findings</h3>
+                        <span class="panel-tag">Report Section 5.2</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="correlation-highlight">
+                            <div class="corr-box">
+                                <span class="corr-val emerald">+0.86</span>
+                                <span class="corr-pair">Total Phenols & Flavanoids</span>
+                                <p class="corr-text">Strongest positive pairwise correlation observed in chemical features, indicating strong coupling in antioxidant polyphenols.</p>
+                            </div>
+                            <div class="corr-box">
+                                <span class="corr-val amber">-0.44</span>
+                                <span class="corr-pair">Alcalinity of Ash vs Flavanoids</span>
+                                <p class="corr-text">Noticeable negative correlation assisting in cultivar differentiation.</p>
+                            </div>
+                        </div>
+
+                        <div class="eda-feature-stats">
+                            <h4 class="subhead">Selected Feature Scales (Report Table 2)</h4>
+                            <div class="stat-bars">
+                                <div class="stat-bar-item">
+                                    <div class="stat-label-row">
+                                        <span>Proline (mg/L)</span>
+                                        <span class="mono">278 – 1680 (mean 746)</span>
+                                    </div>
+                                    <div class="progress-track"><div class="progress-fill fill-amber" style="width: 85%;"></div></div>
+                                </div>
+                                <div class="stat-bar-item">
+                                    <div class="stat-label-row">
+                                        <span>Alcohol (% vol)</span>
+                                        <span class="mono">11.03 – 14.83 (mean 13.0)</span>
+                                    </div>
+                                    <div class="progress-track"><div class="progress-fill fill-emerald" style="width: 65%;"></div></div>
+                                </div>
+                                <div class="stat-bar-item">
+                                    <div class="stat-label-row">
+                                        <span>Color Intensity</span>
+                                        <span class="mono">1.28 – 13.00 (mean 5.06)</span>
+                                    </div>
+                                    <div class="progress-track"><div class="progress-fill fill-cyan" style="width: 50%;"></div></div>
+                                </div>
+                                <div class="stat-bar-item">
+                                    <div class="stat-label-row">
+                                        <span>Hue Ratio</span>
+                                        <span class="mono">0.48 – 1.71 (mean 0.96)</span>
+                                    </div>
+                                    <div class="progress-track"><div class="progress-fill fill-emerald" style="width: 30%;"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. TAB: MONGODB NOSQL CONSOLE -->
+        <section id="tab-nosql" class="tab-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="header-with-status">
+                        <h3>🍃 MongoDB Shell & Query Operations</h3>
+                        <span class="pill-badge" id="nosqlDbBadge">WineAnalysisDB / wine_samples</span>
+                    </div>
+                    <span class="panel-tag">Report Section 6</span>
+                </div>
+                <div class="panel-body">
+                    <p class="section-desc">
+                        Execute real MongoDB commands against the <strong>wine_samples</strong> collection. Choose preset queries directly from <strong>Section 6</strong> of the coursework report, or type custom mongosh / JSON queries.
+                    </p>
+
+                    <!-- Presets Chips -->
+                    <div class="query-presets">
+                        <span class="presets-title">Report Presets:</span>
+                        <button class="chip" data-preset="count_all">
+                            1. Count All Documents <code>countDocuments({})</code>
+                        </button>
+                        <button class="chip" data-preset="limit_5">
+                            2. Display Five Records <code>find().limit(5)</code>
+                        </button>
+                        <button class="chip" data-preset="filter_cultivar_1">
+                            3. Find Cultivar_1 Records <code>find({ class: "Cultivar_1" })</code>
+                        </button>
+                        <button class="chip" data-preset="filter_proline_gt_1000">
+                            4. Filter Proline > 1000 <code>find({ proline: { $gt: 1000 } })</code>
+                        </button>
+                        <button class="chip" data-preset="aggregate_class_counts">
+                            5. Aggregate by Class <code>aggregate([{ $group: ... }])</code>
+                        </button>
+                    </div>
+
+                    <!-- Query Editor & Run Controls -->
+                    <div class="console-box">
+                        <div class="console-header">
+                            <span class="console-prompt">mongosh &gt;</span>
+                            <span class="console-target" id="consoleTarget">WineAnalysisDB.wine_samples</span>
+                            <div class="console-actions">
+                                <button class="btn btn-sm btn-outline" id="btnClearConsole">Clear</button>
+                                <button class="btn btn-sm btn-primary" id="btnRunQuery">Run Query (Ctrl+Enter)</button>
+                            </div>
+                        </div>
+                        <div class="console-editor">
+                            <textarea id="queryInput" rows="3" spellcheck="false" placeholder='db.wine_samples.find({ proline: { $gt: 1000 } })'></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Query Result Info Bar -->
+                    <div class="query-meta-bar" id="queryMetaBar">
+                        <div>
+                            <span>Result Status: <strong id="resStatus" class="emerald">Ready</strong></span>
+                            <span class="separator">•</span>
+                            <span>Matched Records: <strong id="resCount" class="mono">0</strong></span>
+                            <span class="separator">•</span>
+                            <span>Execution Time: <strong id="resTime" class="mono">0 ms</strong></span>
+                            <span class="separator">•</span>
+                            <span>Engine: <strong id="resEngine" class="mono">Local Hybrid Engine</strong></span>
+                        </div>
+                        <button class="btn btn-sm btn-ghost" id="btnCopyJson">📋 Copy JSON</button>
+                    </div>
+
+                    <!-- Output JSON Display -->
+                    <div class="json-display-container">
+                        <pre id="jsonOutput"><code class="language-json">// Click a preset above or click "Run Query" to inspect records...</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. TAB: LIVE CLASSIFIER -->
+        <section id="tab-classifier" class="tab-content">
+            <div class="grid-layout-sidebar">
+                <!-- Left Column: Inputs Form -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>🧪 Input Chemical Measurements (13 Features)</h3>
+                        <div class="preset-selector-group">
+                            <span class="sub-label">Load Preset Sample:</span>
+                            <button class="btn btn-xs btn-outline" id="btnLoadC1">Cultivar 1</button>
+                            <button class="btn btn-xs btn-outline" id="btnLoadC2">Cultivar 2</button>
+                            <button class="btn btn-xs btn-outline" id="btnLoadC3">Cultivar 3</button>
+                            <button class="btn btn-xs btn-ghost" id="btnRandomSample">🎲 Random</button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <form id="predictionForm" class="feature-form">
+                            <!-- Model Selection Bar -->
+                            <div class="model-select-banner">
+                                <label for="selectModel"><strong>Target Classification Model:</strong></label>
+                                <select id="selectModel" class="select-control">
+                                    <option value="all">⚡ All 3 Models Comparison (Consensus)</option>
+                                    <option value="random_forest" selected>Random Forest (200 trees, balanced)</option>
+                                    <option value="logistic_regression">Logistic Regression (StandardScaler scaled)</option>
+                                    <option value="decision_tree">Decision Tree (max_depth=5)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-grid-3">
+                                <!-- 1. Alcohol -->
+                                <div class="form-group">
+                                    <div class="label-row">
+                                        <label for="f_alcohol">Alcohol (% vol)</label>
+                                        <span class="range-hint">11.0 – 14.8</span>
+                                    </div>
+                                    <input type="number" id="f_alcohol" step="0.01" value="14.23" required>
+                                </div>
+
+                                <!-- 2. Malic Acid -->
+                                <div class="form-group">
+                                    <div class="label-row">
+                                        <label for="f_malic_acid">Malic Acid (g/L)</label>
+                                        <span class="range-hint">0.74 – 5.80</span>
+                                    </div>
+                                    <input type="number" id="f_malic_acid" step="0.01" value="1.71" required>
+                                </div>
+
+                                <!-- 3. Ash -->
+                                <div class="form-group">
+                                    <div class="label-row">
+                                        <label for="f_ash">Ash (g/L)</label>
+                                        <span class="range-hint">1.36 – 3.23</span>
+                                    </div>
+                                    <input type="number" id="f_ash" step="0.01" value="2.43" required>
+                                </div>
+
+                                <!-- 4. Alcalinity of Ash -->
+                                <div class="form-group">
+                                    <div class="label-row">
+                                        <label for="f_alcalinity_of_ash">Alcalinity of Ash</label>
+                                        <span class="range-hint">10.6 – 30.0</span>
+                                    </div>
+                                    <input type="number" id="f_alcalinity_of_ash" step="0.1" value="15.6" required>
+                                </div>
+
+                                <!-- 5. Magnesium -->
+                                <div class="form-group">
+                                    <div class="label-row">
+                                        <label for="f_magnesium">Magnesium (mg/L)</label>
+                                        <span class="range-hint">70 – 162</span>
+                                    </div>
+                                    <input type="number" id="f_magnesium" step="1" value="127" required>
+                                </div>
+
+                                <!-- 6. Total Phenols -->
+                                <div class="form-group">
+                                    <div class="label-row">
+                                        <label for="f_total_phenols">Total Phenols (g/L)</label>
+                                        <span class="range-hint">0.98 – 3.88</span>
+                                    </div>
+                                    <input type="number" id="f_total_phenols" step="0.01" value="2.80" required>
+                                </div>
+
+                                <!-- 7. Flavanoids (Top feature) -->
+                                <div class="form-group highlight-feature">
+                                    <div class="label-row">
+                                        <label for="f_flavanoids">Flavanoids (Top RF #1)</label>
+                                        <span class="range-hint">0.34 – 5.08</span>
+                                    </div>
+                                    <input type="number" id="f_flavanoids" step="0.01" value="3.06" required>
+                                </div>
+
+                                <!-- 8. Nonflavanoid Phenols -->
+                                <div class="form-group">
+                                    <div class="label-row">
+                                        <label for="f_nonflavanoid_phenols">Nonflavanoid Phenols</label>
+                                        <span class="range-hint">0.13 – 0.66</span>
+                                    </div>
+                                    <input type="number" id="f_nonflavanoid_phenols" step="0.01" value="0.28" required>
+                                </div>
+
+                                <!-- 9. Proanthocyanins -->
+                                <div class="form-group">
+                                    <div class="label-row">
+                                        <label for="f_proanthocyanins">Proanthocyanins (g/L)</label>
+                                        <span class="range-hint">0.41 – 3.58</span>
+                                    </div>
+                                    <input type="number" id="f_proanthocyanins" step="0.01" value="2.29" required>
+                                </div>
+
+                                <!-- 10. Color Intensity (Top feature) -->
+                                <div class="form-group highlight-feature">
+                                    <div class="label-row">
+                                        <label for="f_color_intensity">Color Intensity (Top #2)</label>
+                                        <span class="range-hint">1.28 – 13.00</span>
+                                    </div>
+                                    <input type="number" id="f_color_intensity" step="0.01" value="5.64" required>
+                                </div>
+
+                                <!-- 11. Hue -->
+                                <div class="form-group">
+                                    <div class="label-row">
+                                        <label for="f_hue">Hue</label>
+                                        <span class="range-hint">0.48 – 1.71</span>
+                                    </div>
+                                    <input type="number" id="f_hue" step="0.01" value="1.04" required>
+                                </div>
+
+                                <!-- 12. OD280/OD315 -->
+                                <div class="form-group">
+                                    <div class="label-row">
+                                        <label for="f_od280_od315">OD280/OD315 Ratio</label>
+                                        <span class="range-hint">1.27 – 4.00</span>
+                                    </div>
+                                    <input type="number" id="f_od280_od315" step="0.01" value="3.92" required>
+                                </div>
+
+                                <!-- 13. Proline (Top feature) -->
+                                <div class="form-group highlight-feature">
+                                    <div class="label-row">
+                                        <label for="f_proline">Proline (Top RF #3)</label>
+                                        <span class="range-hint">278 – 1680</span>
+                                    </div>
+                                    <input type="number" id="f_proline" step="1" value="1065" required>
+                                </div>
+                            </div>
+
+                            <div class="form-submit-row">
+                                <button type="submit" class="btn btn-primary btn-lg" id="btnPredict">
+                                    🎯 Classify Wine Sample
+                                </button>
+                                <button type="button" class="btn btn-outline" id="btnResetInputs">
+                                    Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right Column: Live Prediction Results -->
+                <div class="panel result-panel">
+                    <div class="panel-header">
+                        <h3>Prediction Results</h3>
+                        <span class="panel-tag" id="resultStatusTag">Live Inference</span>
+                    </div>
+                    <div class="panel-body">
+                        <!-- Primary Prediction Outcome -->
+                        <div class="prediction-outcome-box" id="predictionOutcomeBox">
+                            <div class="predicted-class-display">
+                                <span class="predicted-sublabel">Classified Cultivar:</span>
+                                <h2 class="predicted-title emerald" id="predictedClassTitle">Cultivar_1</h2>
+                                <span class="confidence-pill" id="predictedConfidencePill">Confidence: 99.12%</span>
+                            </div>
+
+                            <!-- Probability Bars -->
+                            <div class="prob-section">
+                                <h4 class="subhead">Class Probability Distribution</h4>
+                                <div class="prob-item">
+                                    <div class="prob-label">
+                                        <span>Cultivar_1</span>
+                                        <span class="mono" id="probValC1">99.12%</span>
+                                    </div>
+                                    <div class="progress-track"><div class="progress-fill fill-emerald" id="probBarC1" style="width: 99.12%;"></div></div>
+                                </div>
+                                <div class="prob-item">
+                                    <div class="prob-label">
+                                        <span>Cultivar_2</span>
+                                        <span class="mono" id="probValC2">0.88%</span>
+                                    </div>
+                                    <div class="progress-track"><div class="progress-fill fill-amber" id="probBarC2" style="width: 0.88%;"></div></div>
+                                </div>
+                                <div class="prob-item">
+                                    <div class="prob-label">
+                                        <span>Cultivar_3</span>
+                                        <span class="mono" id="probValC3">0.00%</span>
+                                    </div>
+                                    <div class="progress-track"><div class="progress-fill fill-cyan" id="probBarC3" style="width: 0.00%;"></div></div>
+                                </div>
+                            </div>
+
+                            <!-- Multi-model Comparison Card (when 'all' is chosen) -->
+                            <div class="multi-model-consensus" id="multiModelConsensus">
+                                <h4 class="subhead">Tri-Model Ensemble Consensus</h4>
+                                <div class="consensus-grid">
+                                    <div class="consensus-item">
+                                        <span class="model-tag">Random Forest</span>
+                                        <span class="model-pred emerald" id="rfPredLabel">Cultivar_1</span>
+                                        <span class="model-conf" id="rfConfLabel">99.1%</span>
+                                    </div>
+                                    <div class="consensus-item">
+                                        <span class="model-tag">Logistic Reg.</span>
+                                        <span class="model-pred emerald" id="lrPredLabel">Cultivar_1</span>
+                                        <span class="model-conf" id="lrConfLabel">99.9%</span>
+                                    </div>
+                                    <div class="consensus-item">
+                                        <span class="model-tag">Decision Tree</span>
+                                        <span class="model-pred emerald" id="dtPredLabel">Cultivar_1</span>
+                                        <span class="model-conf" id="dtConfLabel">100.0%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Explanatory Notice -->
+                            <div class="academic-disclaimer">
+                                <small>⚠️ As noted in Section 1 of the coursework report: Predictions are for educational demonstration of database integration and ML pipelines and must not be used for commercial wine authentication.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. TAB: MODEL PERFORMANCE -->
+        <section id="tab-models" class="tab-content">
+            <div class="grid-2-col">
+                <!-- Holdout Test Results Table (Report Table 5.5 / Section 7) -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Holdout Test-Set Metric Comparison</h3>
+                        <span class="panel-tag">Report Section 7 & Table 7</span>
+                    </div>
+                    <div class="panel-body">
+                        <p class="section-desc">Evaluated on the 45-sample stratified holdout test split (25% test size, random_state=42).</p>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Model Classifier</th>
+                                    <th>Accuracy</th>
+                                    <th>Macro Precision</th>
+                                    <th>Macro Recall</th>
+                                    <th>Macro F1-Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Decision Tree (max_depth=5)</strong></td>
+                                    <td>0.9556</td>
+                                    <td>0.9667</td>
+                                    <td>0.9500</td>
+                                    <td>0.9565</td>
+                                </tr>
+                                <tr class="highlight-row">
+                                    <td><strong>Logistic Regression (scaled)</strong></td>
+                                    <td class="emerald font-bold">1.0000</td>
+                                    <td class="emerald font-bold">1.0000</td>
+                                    <td class="emerald font-bold">1.0000</td>
+                                    <td class="emerald font-bold">1.0000</td>
+                                </tr>
+                                <tr class="highlight-row">
+                                    <td><strong>Random Forest (200 trees)</strong></td>
+                                    <td class="emerald font-bold">1.0000</td>
+                                    <td class="emerald font-bold">1.0000</td>
+                                    <td class="emerald font-bold">1.0000</td>
+                                    <td class="emerald font-bold">1.0000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="chart-container mt-4">
+                            <canvas id="modelCompChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Random Forest Confusion Matrix & Class-wise -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3>Random Forest Class-Wise Performance</h3>
+                        <span class="panel-tag">Report Section 7.1 & Figure 3</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="cm-wrapper">
+                            <h4 class="subhead">Confusion Matrix (45 Test Samples)</h4>
+                            <div class="cm-grid">
+                                <div class="cm-corner">Actual \ Pred</div>
+                                <div class="cm-header">Cultivar_1</div>
+                                <div class="cm-header">Cultivar_2</div>
+                                <div class="cm-header">Cultivar_3</div>
+
+                                <div class="cm-row-label">Cultivar_1</div>
+                                <div class="cm-cell cm-hit">15</div>
+                                <div class="cm-cell cm-zero">0</div>
+                                <div class="cm-cell cm-zero">0</div>
+
+                                <div class="cm-row-label">Cultivar_2</div>
+                                <div class="cm-cell cm-zero">0</div>
+                                <div class="cm-cell cm-hit">18</div>
+                                <div class="cm-cell cm-zero">0</div>
+
+                                <div class="cm-row-label">Cultivar_3</div>
+                                <div class="cm-cell cm-zero">0</div>
+                                <div class="cm-cell cm-zero">0</div>
+                                <div class="cm-cell cm-hit">12</div>
+                            </div>
+                            <p class="cm-note">All 15 Cultivar_1, 18 Cultivar_2, and 12 Cultivar_3 records correctly classified with 0 misclassifications.</p>
+                        </div>
+
+                        <div class="feature-importance-box mt-4">
+                            <h4 class="subhead">Top Feature Importances (Random Forest)</h4>
+                            <div class="fi-item">
+                                <div class="fi-label"><span>1. Flavanoids</span> <span class="mono">0.192 (19.2%)</span></div>
+                                <div class="progress-track"><div class="progress-fill fill-emerald" style="width: 19.2%;"></div></div>
+                            </div>
+                            <div class="fi-item">
+                                <div class="fi-label"><span>2. Color Intensity</span> <span class="mono">0.173 (17.3%)</span></div>
+                                <div class="progress-track"><div class="progress-fill fill-amber" style="width: 17.3%;"></div></div>
+                            </div>
+                            <div class="fi-item">
+                                <div class="fi-label"><span>3. Proline</span> <span class="mono">0.143 (14.3%)</span></div>
+                                <div class="progress-track"><div class="progress-fill fill-cyan" style="width: 14.3%;"></div></div>
+                            </div>
+                            <div class="fi-item">
+                                <div class="fi-label"><span>4. Hue</span> <span class="mono">0.118 (11.8%)</span></div>
+                                <div class="progress-track"><div class="progress-fill fill-emerald" style="width: 11.8%;"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Five-Fold Cross Validation Panel -->
+            <div class="panel mt-4">
+                <div class="panel-header">
+                    <h3>Stratified 5-Fold Cross-Validation (Random Forest)</h3>
+                    <span class="panel-tag">Report Section 7.2</span>
+                </div>
+                <div class="panel-body">
+                    <p class="section-desc">
+                        Random Forest evaluated across 5 stratified folds on the full 178-record dataset (StratifiedKFold, shuffle=True, random_state=42).
+                    </p>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fold Metric</th>
+                                <th>Mean Score</th>
+                                <th>Standard Deviation</th>
+                                <th>Stability Assessment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Accuracy</strong></td>
+                                <td class="mono font-bold emerald">0.9773 (97.73%)</td>
+                                <td class="mono">± 0.0372</td>
+                                <td>High stability across splits</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Macro Precision</strong></td>
+                                <td class="mono font-bold emerald">0.9766 (97.66%)</td>
+                                <td class="mono">± 0.0378</td>
+                                <td>Balanced positive predictive value</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Macro Recall</strong></td>
+                                <td class="mono font-bold emerald">0.9802 (98.02%)</td>
+                                <td class="mono">± 0.0327</td>
+                                <td>Low false negative rate across classes</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Macro F1-Score</strong></td>
+                                <td class="mono font-bold emerald">0.9779 (97.79%)</td>
+                                <td class="mono">± 0.0358</td>
+                                <td>Strong harmonic balance across folds</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. TAB: DATASET EXPLORER -->
+        <section id="tab-dataset" class="tab-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>📋 UCI Wine Records Browser (178 Samples)</h3>
+                    <div class="filter-controls">
+                        <select id="filterClassSelect" class="select-control-sm">
+                            <option value="">All Cultivars (178)</option>
+                            <option value="Cultivar_1">Cultivar_1 (59)</option>
+                            <option value="Cultivar_2">Cultivar_2 (71)</option>
+                            <option value="Cultivar_3">Cultivar_3 (48)</option>
+                        </select>
+                        <input type="text" id="filterSearchInput" class="search-input-sm" placeholder="Search values...">
+                        <button class="btn btn-sm btn-outline" id="btnRefreshDataset">Refresh</button>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="table-responsive">
+                        <table class="data-table" id="wineDataTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Class</th>
+                                    <th>Alcohol</th>
+                                    <th>Malic Acid</th>
+                                    <th>Ash</th>
+                                    <th>Alcalinity</th>
+                                    <th>Magnesium</th>
+                                    <th>Phenols</th>
+                                    <th>Flavanoids</th>
+                                    <th>Nonflavanoid</th>
+                                    <th>Color</th>
+                                    <th>Hue</th>
+                                    <th>OD280</th>
+                                    <th>Proline</th>
+                                </tr>
+                            </thead>
+                            <tbody id="wineDataBody">
+                                <tr><td colspan="14" class="text-center">Loading dataset records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination-bar">
+                        <div class="pagination-info" id="paginationInfo">Showing 1 to 15 of 178 records</div>
+                        <div class="pagination-buttons">
+                            <button class="btn btn-sm btn-outline" id="btnPrevPage">« Prev</button>
+                            <span class="page-indicator" id="pageIndicator">Page 1 of 12</span>
+                            <button class="btn btn-sm btn-outline" id="btnNextPage">Next »</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. TAB: SAVED OUTPUTS -->
+        <section id="tab-outputs" class="tab-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>💾 Saved Project Artifacts</h3>
+                    <span class="panel-tag">Report Section 8</span>
+                </div>
+                <div class="panel-body">
+                    <p class="section-desc">
+                        As detailed in <strong>Section 8 (Saved Project Outputs)</strong> of the coursework report, the pipeline writes key model weights, serialized metrics, and evaluation CSV files into the <code>outputs/</code> folder. You can directly inspect or download them below.
+                    </p>
+
+                    <div class="artifacts-grid">
+                        <!-- 1. Model PKL -->
+                        <div class="artifact-card">
+                            <div class="artifact-icon">📦</div>
+                            <div class="artifact-info">
+                                <h4>random_forest_model.pkl</h4>
+                                <p>Serialized Random Forest estimator saved with Joblib (200 estimators).</p>
+                                <span class="artifact-size">~393 KB</span>
+                            </div>
+                            <a href="/api/outputs/download/random_forest_model.pkl" class="btn btn-sm btn-primary">Download PKL</a>
+                        </div>
+
+                        <!-- 2. Evaluation Metrics JSON -->
+                        <div class="artifact-card">
+                            <div class="artifact-icon">📄</div>
+                            <div class="artifact-info">
+                                <h4>evaluation_metrics.json</h4>
+                                <p>Holdout metrics, 5-fold CV scores, and feature importances.</p>
+                                <span class="artifact-size">JSON format</span>
+                            </div>
+                            <a href="/api/outputs/download/evaluation_metrics.json" class="btn btn-sm btn-primary">Download JSON</a>
+                        </div>
+
+                        <!-- 3. Classification Report CSV -->
+                        <div class="artifact-card">
+                            <div class="artifact-icon">📊</div>
+                            <div class="artifact-info">
+                                <h4>classification_report.csv</h4>
+                                <p>Precision, recall, and F1-score breakdown per cultivar.</p>
+                                <span class="artifact-size">CSV format</span>
+                            </div>
+                            <a href="/api/outputs/download/classification_report.csv" class="btn btn-sm btn-primary">Download CSV</a>
+                        </div>
+
+                        <!-- 4. Confusion Matrix CSV -->
+                        <div class="artifact-card">
+                            <div class="artifact-icon">🧮</div>
+                            <div class="artifact-info">
+                                <h4>confusion_matrix.csv</h4>
+                                <p>3x3 confusion matrix table for the 45-sample holdout test set.</p>
+                                <span class="artifact-size">CSV format</span>
+                            </div>
+                            <a href="/api/outputs/download/confusion_matrix.csv" class="btn btn-sm btn-primary">Download CSV</a>
+                        </div>
+
+                        <!-- 5. Test Predictions CSV -->
+                        <div class="artifact-card">
+                            <div class="artifact-icon">📑</div>
+                            <div class="artifact-info">
+                                <h4>test_predictions.csv</h4>
+                                <p>Actual vs predicted labels for all 45 test split records.</p>
+                                <span class="artifact-size">CSV format</span>
+                            </div>
+                            <a href="/api/outputs/download/test_predictions.csv" class="btn btn-sm btn-primary">Download CSV</a>
+                        </div>
+
+                        <!-- 6. Wine Samples JSON -->
+                        <div class="artifact-card">
+                            <div class="artifact-icon">🍃</div>
+                            <div class="artifact-info">
+                                <h4>wine_samples.json</h4>
+                                <p>All 178 MongoDB documents formatted for Atlas collection seeding.</p>
+                                <span class="artifact-size">~66 KB</span>
+                            </div>
+                            <a href="/api/outputs/download/wine_samples.json" class="btn btn-sm btn-primary">Download JSON</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. TAB: REPORT SUMMARY -->
+        <section id="tab-report" class="tab-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>📑 Coursework Project Summary & Methodology</h3>
+                    <span class="panel-tag">Report Sections 3, 5, 9, 10</span>
+                </div>
+                <div class="panel-body report-markdown">
+                    <div class="report-block">
+                        <h4>1. Project Overview & Objectives</h4>
+                        <p>
+                            Food-chemistry datasets often contain structured laboratory measurements that can be analyzed to investigate patterns associated with different product categories. This project uses 13 chemical constituents measured in wines grown in the same region of Italy to classify each sample into one of three grape cultivars. The work combines a NoSQL database workflow (MongoDB Atlas / PyMongo) with a conventional machine-learning pipeline (Scikit-learn).
+                        </p>
+                    </div>
+
+                    <div class="report-block">
+                        <h4>2. End-to-End Methodology Sequence</h4>
+                        <ol class="methodology-steps">
+                            <li><strong>Dataset Loading & Validation:</strong> 178 UCI wine records loaded, verified 0 missing values, 0 duplicates.</li>
+                            <li><strong>Exploratory Data Analysis:</strong> Class count plots, histograms, correlation heatmap, standardized boxplots.</li>
+                            <li><strong>MongoDB Atlas Integration:</strong> Cloud-hosted cluster connection via PyMongo, seeding <code>WineAnalysisDB.wine_samples</code>, querying and retrieving records.</li>
+                            <li><strong>Preprocessing & Holdout Split:</strong> Stratified 75/25 split (133 train, 45 test) preserving class balance. StandardScaler fitted for Logistic Regression.</li>
+                            <li><strong>Classifier Training & Comparison:</strong> Decision Tree (max_depth=5), Logistic Regression (scaled, max_iter=1000), Random Forest (200 trees, balanced).</li>
+                            <li><strong>Validation & Artifact Export:</strong> Stratified 5-fold cross-validation on Random Forest; serialization of fitted model, scaler, metrics, and CSV reports.</li>
+                        </ol>
+                    </div>
+
+                    <div class="report-block">
+                        <h4>3. Key Limitations & Academic Integrity</h4>
+                        <ul>
+                            <li><strong>Dataset Size:</strong> 178 instances is a compact dataset; performance metrics can vary with splits.</li>
+                            <li><strong>Holdout Sensitivity:</strong> Holdout test set holds 45 records; a single changed prediction shifts accuracy by ~2.2%.</li>
+                            <li><strong>Perfect Holdout Scores:</strong> 100% holdout accuracy for Random Forest and Logistic Regression reflects the well-separated nature of the UCI Wine dataset rather than infinite generalization.</li>
+                            <li><strong>Correlation vs Causation:</strong> Feature importances reflect statistical patterns and do not prove biochemical causation.</li>
+                        </ul>
+                    </div>
+
+                    <div class="report-block">
+                        <h4>4. References</h4>
+                        <ul class="references-list">
+                            <li>Aeberhard, S. & Forina, M. (1992). Wine [Dataset]. UCI Machine Learning Repository.</li>
+                            <li>MongoDB Documentation & PyMongo Driver Manual.</li>
+                            <li>Scikit-learn, Pandas, Matplotlib, and Seaborn Documentation.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MongoDB Connection Modal -->
+    <div class="modal-overlay" id="dbModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🍃 MongoDB Atlas Connection Settings</h3>
+                <button class="modal-close" id="btnCloseDbModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">
+                    Enter your MongoDB Atlas connection string URI to connect directly to your cloud cluster. If left blank, the system operates in <strong>Local Hybrid Mode</strong> using the exact 178 UCI Wine records.
+                </p>
+                <div class="form-group">
+                    <label for="mongoUriInput"><strong>MongoDB Connection URI:</strong></label>
+                    <input type="text" id="mongoUriInput" placeholder="mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority" class="text-input">
+                    <small class="field-hint">Credentials are securely loaded into memory and not exposed to frontend clients.</small>
+                </div>
+                <div class="db-details-box">
+                    <div><strong>Target Database:</strong> <span class="mono">WineAnalysisDB</span></div>
+                    <div><strong>Target Collection:</strong> <span class="mono">wine_samples</span></div>
+                    <div><strong>Current Mode:</strong> <span id="modalCurrentMode" class="emerald mono">Local Hybrid</span></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="btnCancelDbModal">Cancel</button>
+                <button class="btn btn-primary" id="btnSaveDbModal">Connect / Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <div>
+                <strong>CSE 494: Intelligent NoSQL Database</strong> • CA2 Project Website
+            </div>
+            <div>
+                Author: <strong>Gunda Venkatasai</strong> (12314012) • Lovely Professional University
+            </div>
+        </div>
+    </footer>
+
+    <!-- App Logic -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
+
